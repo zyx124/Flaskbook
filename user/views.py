@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, url_for, redirect, session, abort
 from user.forms import RegisterForm, LoginForm, EditForm
 from user.models import User
+from utilities.common import email
+
 import bcrypt
+import uuid
 
 user_app = Blueprint('user_app', __name__)
 
@@ -42,15 +45,21 @@ def register():
     if form.validate_on_submit():
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(form.password.data, salt)
+        code =str(uuid.uuid4())
         user = User(
             username=form.username.data,
             password=hashed_password,
             email=form.email.data,
             first_name=form.first_name.data,
             last_name=form.last_name.data,
-
+            change_configuration={
+                'new_email': form.email.data.lower(),
+                "confirmation_code": code,
+            }
         )
-
+        body_html = render_template("mail/user/register.html", user=user)
+        body_text = render_template("mail/user/register.txt", user=user)
+        email(user.email, 'Welcome to Flaskbook', body_html, body_text)
         user.save()
         return "User registered"
     return render_template('user/register.html', form=form)
@@ -66,10 +75,11 @@ def logout():
 def profile(username):
     edit_profile = False
     user = User.objects.filter(username=username).first()
+
     if session.get('username') and user.username == session.get('username'):
         edit_profile = True
     if user:
-        return render_template("user/profile.html", user=user, edit_profile=edit_profile)
+        return render_template('user/profile.html', user=user, edit_profile=edit_profile)
     else:
         abort(404)
 
@@ -98,5 +108,18 @@ def edit():
                 user.save()
                 message = 'Profile updated'
         return render_template('user/edit.html', form=form, error=error, message=message)
+    else:
+        abort(404)
+
+
+@user_app.route('/confirm/<username>/<code>', methods=('GET', 'POST'))
+def confirm(username, code):
+    user = User.objects.filter(username=username).first()
+    if user and user.change_configuration and user.change_configuration.get('confirmation_code'):
+        user.email = user.change_configuration.get("new_email")
+        user.change_configuration = {}
+        user.email_confirmed = True
+        user.save()
+        return render_template("user/email_confirmed.html")
     else:
         abort(404)
