@@ -1,12 +1,16 @@
 import time
 import boto3
-
+from flask import current_app
 
 def utc_now_ts():
     return int(time.time())
 
 
 def email(to_email, subject, body_html, body_text):
+    # in the test, do not sent the email
+    if current_app.config.get("TESTING"):
+        return False
+
     client = boto3.client('ses')
     return client.send_email(
         Source='zhaoyuxin124@gmail.com',
