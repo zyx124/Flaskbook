@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, Form
 from wtforms import validators, StringField, PasswordField
 from wtforms.widgets import TextArea
 from wtforms.fields.html5 import EmailField
@@ -14,6 +14,15 @@ class BaseUserForm(FlaskForm):
     email = EmailField("Email Address", [validators.DataRequired(), validators.Email()])
     username = StringField('Username', [validators.DataRequired(), validators.length(min=4, max=25)])
     bio = StringField('Bio', widget=TextArea(), validators=[validators.Length(max=160)])
+
+
+class PasswordBaseForm(FlaskForm):
+    password = PasswordField('New Password', [
+        validators.DataRequired(),
+        validators.EqualTo('confirm', message='Password much match'),
+        validators.length(min=4, max=80)
+    ])
+    confirm = PasswordField("Repeat Password")
 
 
 class RegisterForm(BaseUserForm):
@@ -40,3 +49,13 @@ class LoginForm(FlaskForm):
 
 class EditForm(BaseUserForm):
     pass
+
+
+class ForgotForm(FlaskForm):
+    email = EmailField('Email address',
+                       [validators.DataRequired(), validators.Email()])
+
+
+class PasswordResetForm(PasswordBaseForm):
+    current_password = PasswordField('Current Password', [validators.DataRequired(),
+                                                           validators.Length(min=4, max=80)])

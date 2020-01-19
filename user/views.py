@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, url_for, redirect, session, abort
-from user.forms import RegisterForm, LoginForm, EditForm
+from user.forms import RegisterForm, LoginForm, EditForm, ForgotForm, PasswordResetForm
 from user.models import User
 from utilities.common import email
 
@@ -138,3 +138,62 @@ def confirm(username, code):
         return render_template("user/email_confirmed.html")
     else:
         abort(404)
+
+
+@user_app.route('/forgot', methods=('GET', 'POST'))
+def forgot():
+    error = None
+    message = None
+    form = ForgotForm()
+    if form.validate_on_submit():
+        user = User.objects.filter(email=form.email.data.lower()).first()
+        if user:
+            code = str(uuid.uuid4())
+            user.change_configuration={
+                "password_reset_code": code
+            }
+            user.save()
+
+            # email the user
+            body_html = render_template('mail/user/password_reset.html', user=user)
+            body_text = render_template('mail/user/password_reset.txt', user=user)
+            email(user.email, "password reset request", body_html, body_text)
+
+        message = "You will recieve a password reset email if we find that email in our system"
+    return render_template("user/forgot.html", form=form, error=error, message=message)
+
+
+@user_app.route('/password_reset/<username>/<code>', methods=('GET', 'POST'))
+def password_reset(username, code):
+    message = None
+    require_current = None
+
+    form  = PasswordResetForm()
+    user = User.objects.filter(username=username).first()
+    if not user or code != user.change_configuration.get('password_reset_code'):
+        abort(404)
+
+    if request.method == "POST":
+        del form.current_password
+        if form.validate_on_submit():
+            salt = bcrypt.gensalt()
+            hashed_password = bcrypt.hashpw(form.password.data, salt)
+            user.password = hashed_password
+            user.change_configuration = {}
+            user.save()
+
+            if session.get('username'):
+                session.pop('username')
+            return redirect(url_for('user_app.password_reset_complete'))
+
+    return render_template('user/password_reset.html',
+                           form=form,
+                           message=message,
+                           require_current=require_current,
+                           username=username,
+                           code=code)
+
+
+@user_app.route('/password_reset_complete')
+def password_reset_complete():
+    return render_template("user/password_change_confirmed.html")
