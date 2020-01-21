@@ -25,12 +25,7 @@ class PasswordBaseForm(FlaskForm):
     confirm = PasswordField("Repeat Password")
 
 
-class RegisterForm(BaseUserForm):
-    password = PasswordField('New Password', [validators.DataRequired(),
-                                              validators.EqualTo("confirm", message='Password must match'),
-                                              validators.length(min=4, max=80)])
-    confirm = PasswordField("Repeat Password")
-
+class RegisterForm(BaseUserForm, PasswordBaseForm):
     def validate_username(form, field):
         if User.objects.filter(username=field.data).first():
             raise ValidationError('Username already exists')

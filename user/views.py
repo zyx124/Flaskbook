@@ -159,7 +159,7 @@ def forgot():
             body_text = render_template('mail/user/password_reset.txt', user=user)
             email(user.email, "password reset request", body_html, body_text)
 
-        message = "You will recieve a password reset email if we find that email in our system"
+        message = "You will receive a password reset email if we find that email in our system"
     return render_template("user/forgot.html", form=form, error=error, message=message)
 
 
