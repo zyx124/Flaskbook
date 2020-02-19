@@ -5,7 +5,7 @@ from utilities.common import utc_now_ts as now
 from settings import UPLOAD_FOLDER
 
 
-def thumbnail_process(file, content_type, content_id, sizes=[('sm, 50'), ('lg', 75), ('xlg', 200)]):
+def thumbnail_process(file, content_type, content_id, sizes=(("sm", 50), ("lg", 75), ("xlg", 200))):
     image_id = now()
     filename_template = content_id + '.%s.%s.png'
 
@@ -14,7 +14,7 @@ def thumbnail_process(file, content_type, content_id, sizes=[('sm, 50'), ('lg', 
         img.format = 'png'
         img.save(filename=os.path.join(UPLOAD_FOLDER, content_type, filename_template % (image_id, 'raw')))
 
-    for (name, size) in sizes:
+    for name, size in sizes:
         with Image(filename=file) as img:
             crop_center(img)
             img.sample(size, size)
