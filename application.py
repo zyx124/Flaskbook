@@ -13,5 +13,7 @@ def create_app(**config_overrides):
     db.init_app(app)
 
     from user.views import user_app
+    from relationship.views import relationship_app
     app.register_blueprint(user_app)
+    app.register_blueprint(relationship_app)
     return app

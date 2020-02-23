@@ -5,6 +5,7 @@ from utilities.common import email
 from werkzeug.utils import secure_filename
 from settings import UPLOAD_FOLDER
 from utilities.imaging import thumbnail_process
+from relationship.models import Relationship
 
 
 import bcrypt
@@ -80,11 +81,18 @@ def logout():
 def profile(username):
     edit_profile = False
     user = User.objects.filter(username=username).first()
+    rel = None
 
     if user and session.get('username') and user.username == session.get('username'):
         edit_profile = True
     if user:
-        return render_template('user/profile.html', user=user, edit_profile=edit_profile)
+        if session.get('username'):
+            logged_user = User.objects.filter(username=session.get('username')).first()
+            print(logged_user.username)
+            print(user.username)
+            rel = Relationship.get_relationship(logged_user, user)
+            # print(rel.from_user.username)
+        return render_template('user/profile.html', user=user,rel=rel, edit_profile=edit_profile)
     else:
         abort(404)
 
