@@ -88,10 +88,9 @@ def profile(username):
     if user:
         if session.get('username'):
             logged_user = User.objects.filter(username=session.get('username')).first()
-            print(logged_user.username)
-            print(user.username)
+            # print(logged_user.username)
+            # print(user.username)
             rel = Relationship.get_relationship(logged_user, user)
-            # print(rel.from_user.username)
         return render_template('user/profile.html', user=user,rel=rel, edit_profile=edit_profile)
     else:
         abort(404)
