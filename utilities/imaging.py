@@ -24,6 +24,7 @@ def thumbnail_process(file, content_type, content_id, sizes=(("sm", 50), ("lg", 
     os.remove(file)
     return image_id
 
+
 def crop_center(image):
     dst_landscape = 1 > image.width / image.height
     wh = image.width if dst_landscape else image.height
